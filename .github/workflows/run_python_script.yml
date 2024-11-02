@@ -18,6 +18,11 @@ jobs:
         with:
           python-version: '3.x'  # Remplacez par la version de Python souhaitée
 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
       - name: Run Python Script
         run: |
           python VIE_API.py  # Remplacez par le nom de votre script
