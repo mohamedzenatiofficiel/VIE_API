@@ -1,6 +1,9 @@
 import requests
 import pandas as pd
 import os
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 # Définition de l'URL et des en-têtes pour la requête
 url = "https://civiweb-api-prd.azurewebsites.net/api/Offers/search"
@@ -53,12 +56,64 @@ else:
     # Nom du fichier CSV
     filename = 'nom_du_fichier.csv'
 
-    # Vérifie si le fichier existe déjà pour gérer l'incrément
+    # Chargement des annonces existantes si le fichier existe
     if os.path.isfile(filename):
-        # Ajout des données sans réécrire l'en-tête si le fichier existe
-        df_results.to_csv(filename, mode='a', index=False, sep=';', encoding='utf-8', header=False)
+        df_existing = pd.read_csv(filename, sep=';', encoding='utf-8')
+        existing_ids = set(df_existing['id'])
     else:
-        # Création du fichier avec l'en-tête si le fichier n'existe pas
-        df_results.to_csv(filename, mode='w', index=False, sep=';', encoding='utf-8', header=True)
+        df_existing = pd.DataFrame(columns=colonnes_a_conserver)
+        existing_ids = set()
 
-    print("Les nouvelles données ont été ajoutées dans 'nom_du_fichier.csv'")
+    # Filtrer les nouvelles annonces
+    df_new = df_results[~df_results['id'].isin(existing_ids)]
+
+    if not df_new.empty:
+        # Ajout des nouvelles annonces au fichier CSV
+        df_new.to_csv(filename, mode='a', index=False, sep=';', encoding='utf-8', header=not os.path.isfile(filename))
+        print("Les nouvelles données ont été ajoutées dans 'nom_du_fichier.csv'")
+
+        # Ajout de l'URL de l'annonce
+        df_new['URL'] = df_new['id'].apply(lambda x: f"<a href='https://mon-vie-via.businessfrance.fr/offres/recherche?query=data{x}'>Voir l'offre</a>")
+        
+        # Construction du contenu HTML de l'e-mail
+        html_table = df_new.to_html(index=False, columns=['organizationName', 'missionTitle', 'missionDuration','countryNameEn', 'cityAffectation', 'URL'], escape=False, border=1)
+
+        # En-tête HTML de l'email
+        email_body = f"""
+        <html>
+        <body>
+            <h2>Nouvelles annonces ajoutées</h2>
+            <p>{len(df_new)} nouvelles annonces ont été ajoutées. Voici les détails :</p>
+            {html_table}
+            <p>Bien cordialement,</p>
+            <p>Votre système de suivi des annonces VIE</p>
+        </body>
+        </html>
+        """
+
+        # Configuration de l'e-mail
+        sender_email = "z.mohamedpro@gmail.com"
+        receiver_email = "z.mohamedpro@gmail.com"
+        subject = "Nouvelles annonces ajoutées"
+
+        msg = MIMEMultipart("alternative")
+        msg['From'] = sender_email
+        msg['To'] = receiver_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(email_body, 'html'))
+
+        # Connexion au serveur SMTP
+        try:
+            smtp_server = 'smtp.gmail.com'  # Exemple pour Gmail
+            smtp_port = 587  # Port SMTP pour TLS
+            smtp_password = "dvpgwkatxnmgayrd"  # Mot de passe de votre compte email
+
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()  # Active le mode TLS
+                server.login(sender_email, smtp_password)  # Authentification
+                server.send_message(msg)  # Envoi de l'e-mail
+                print("E-mail de notification envoyé avec succès.")
+        except smtplib.SMTPException as email_err:
+            print("Erreur lors de l'envoi de l'e-mail :", email_err)
+    else:
+        print("Aucune nouvelle annonce à ajouter.")
