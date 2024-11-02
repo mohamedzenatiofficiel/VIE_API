@@ -25,4 +25,4 @@ jobs:
 
       - name: Run Python Script
         run: |
-          python your_script.py  # Remplacez par le nom de votre script
+          python VIE_API.py  # Remplacez par le nom de votre script
