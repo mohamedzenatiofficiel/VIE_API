@@ -27,8 +27,12 @@ jobs:
         run: |
           python VIE_API.py  # Remplacez par le nom de votre script
 
-      - name: Upload CSV file
-        uses: actions/upload-artifact@v3
-        with:
-          name: nom_du_fichier.csv
-          path: nom_du_fichier.csv
+      - name: Commit and Push CSV
+        run: |
+          git config --global user.name "Mohamed Zenati"
+          git config --global user.email "z.mohamedpro@gmail.com"
+          git add nom_du_fichier.csv
+          git commit -m "Update CSV file with new data"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
