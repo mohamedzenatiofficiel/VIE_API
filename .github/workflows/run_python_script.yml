@@ -5,13 +5,16 @@ on:
     - cron: '*/10 * * * *'  # Toutes les 10 minutes
   workflow_dispatch:  # Permet de lancer manuellement
 
+permissions:
+  contents: write  # Donne les permissions d'écriture pour le dépôt
+
 jobs:
   run-script:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v2
