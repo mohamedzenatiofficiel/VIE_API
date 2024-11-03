@@ -2,7 +2,7 @@ name: Run Python Script Every 10 Minutes
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Toutes les 10 minutes
+    - cron: '*/10 * * * *'  # Toutes les 10 minutes
   workflow_dispatch:  # Permet de lancer manuellement
 
 permissions:
@@ -35,7 +35,7 @@ jobs:
           git config --global user.name "Mohamed Zenati"
           git config --global user.email "z.mohamedpro@gmail.com"
           git add nom_du_fichier.csv
-          git commit -m "Update CSV file with new data"
+          git diff --cached --quiet || git commit -m "Update CSV file with new data"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
