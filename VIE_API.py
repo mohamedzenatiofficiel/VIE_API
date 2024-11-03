@@ -71,18 +71,17 @@ else:
         df_new.to_csv(filename, mode='a', index=False, sep=';', encoding='utf-8', header=not os.path.isfile(filename))
         print("Les nouvelles données ont été ajoutées dans 'nom_du_fichier.csv'")
 
-        # URL de recherche des offres
-        offres_url = "https://mon-vie-via.businessfrance.fr/offres/recherche?query=data"
+        # Ajout de l'URL pour chaque annonce dans une nouvelle colonne
+        df_new['URL'] = df_new['id'].apply(lambda x: f"<a href='https://mon-vie-via.businessfrance.fr/offres/recherche?query=data&id={x}'>Voir l'offre</a>")
         
         # Construction du contenu HTML de l'e-mail
-        html_table = df_new.to_html(index=False, columns=['organizationName', 'missionTitle', 'missionDuration', 'countryNameEn', 'cityAffectation'], escape=False, border=1)
+        html_table = df_new.to_html(index=False, columns=['organizationName', 'missionTitle', 'missionDuration', 'countryNameEn', 'cityAffectation', 'URL'], escape=False, border=1)
         
         email_body = f"""
         <html>
         <body>
             <h2>Nouvelles annonces ajoutées</h2>
-            <p>{len(df_new)} nouvelles annonces ont été ajoutées. Vous pouvez accéder à toutes les offres en cliquant <a href="{offres_url}">ici</a>.</p>
-            <h3>Détails des nouvelles annonces :</h3>
+            <p>{len(df_new)} nouvelles annonces ont été ajoutées. Voici les détails :</p>
             {html_table}
             <p>Bien cordialement,</p>
             <p>Votre système de suivi des annonces VIE</p>
