@@ -35,7 +35,7 @@ data = {
 # Envoi de la requête POST pour récupérer les données
 try:
     response = requests.post(url, headers=headers, json=data)
-    response.raise_for_status()  # Vérifie si la requête a été réussie
+    response.raise_for_status()
     data = response.json()
 except requests.exceptions.HTTPError as err:
     print("Erreur HTTP :", err)
@@ -61,7 +61,6 @@ else:
         df_existing = pd.read_csv(filename, sep=';', encoding='utf-8')
         existing_ids = set(df_existing['id'])
     else:
-        df_existing = pd.DataFrame(columns=colonnes_a_conserver)
         existing_ids = set()
 
     # Filtrer les nouvelles annonces
@@ -72,18 +71,18 @@ else:
         df_new.to_csv(filename, mode='a', index=False, sep=';', encoding='utf-8', header=not os.path.isfile(filename))
         print("Les nouvelles données ont été ajoutées dans 'nom_du_fichier.csv'")
 
-        # Ajout de l'URL de l'annonce
-        df_new['URL'] = df_new['id'].apply(lambda x: f"<a href='https://mon-vie-via.businessfrance.fr/offres/recherche?query=data{x}'>Voir l'offre</a>")
+        # URL de recherche des offres
+        offres_url = "https://mon-vie-via.businessfrance.fr/offres/recherche?query=data"
         
         # Construction du contenu HTML de l'e-mail
-        html_table = df_new.to_html(index=False, columns=['organizationName', 'missionTitle', 'missionDuration','countryNameEn', 'cityAffectation', 'URL'], escape=False, border=1)
-
-        # En-tête HTML de l'email
+        html_table = df_new.to_html(index=False, columns=['organizationName', 'missionTitle', 'missionDuration', 'countryNameEn', 'cityAffectation'], escape=False, border=1)
+        
         email_body = f"""
         <html>
         <body>
             <h2>Nouvelles annonces ajoutées</h2>
-            <p>{len(df_new)} nouvelles annonces ont été ajoutées. Voici les détails :</p>
+            <p>{len(df_new)} nouvelles annonces ont été ajoutées. Vous pouvez accéder à toutes les offres en cliquant <a href="{offres_url}">ici</a>.</p>
+            <h3>Détails des nouvelles annonces :</h3>
             {html_table}
             <p>Bien cordialement,</p>
             <p>Votre système de suivi des annonces VIE</p>
@@ -104,14 +103,14 @@ else:
 
         # Connexion au serveur SMTP
         try:
-            smtp_server = 'smtp.gmail.com'  # Exemple pour Gmail
-            smtp_port = 587  # Port SMTP pour TLS
+            smtp_server = 'smtp.gmail.com'
+            smtp_port = 587
             smtp_password = "dvpgwkatxnmgayrd"  # Mot de passe de votre compte email
 
             with smtplib.SMTP(smtp_server, smtp_port) as server:
-                server.starttls()  # Active le mode TLS
-                server.login(sender_email, smtp_password)  # Authentification
-                server.send_message(msg)  # Envoi de l'e-mail
+                server.starttls()
+                server.login(sender_email, smtp_password)
+                server.send_message(msg)
                 print("E-mail de notification envoyé avec succès.")
         except smtplib.SMTPException as email_err:
             print("Erreur lors de l'envoi de l'e-mail :", email_err)
